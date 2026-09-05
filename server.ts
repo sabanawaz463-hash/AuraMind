@@ -7,7 +7,7 @@ import { createServer as createViteServer } from 'vite';
 dotenv.config();
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = 3000;
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
@@ -25,10 +25,9 @@ function getGenAI(): GoogleGenAI {
 }
 
 const MODEL_FALLBACK_LADDER = [
-  'gemini-3.6-flash',
-  'gemini-3.1-flash-lite',
+  'gemini-3.8-flash',
   'gemini-flash-latest',
-  'gemini-3.7-flash',
+  'gemini-3.1-flash-lite',
 ];
 
 interface FallbackOptions {

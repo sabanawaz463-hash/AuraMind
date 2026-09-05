@@ -54,7 +54,7 @@ export const LandingHero: React.FC = () => {
         {/* Security & AI Badge */}
         <div className="inline-flex items-center gap-2 rounded-full border border-amber-300/80 bg-amber-50 px-4 py-1.5 text-xs font-medium text-amber-900 mb-8 shadow-xs">
           <Shield className="h-3.5 w-3.5 text-amber-700" />
-          <span>User-Isolated Firestore Database & Gemini 3.6 Flash Engine</span>
+          <span>User-Isolated Firestore Database & Gemini 3.8 Flash Engine</span>
         </div>
 
         {/* Hero Title */}
@@ -164,7 +164,7 @@ export const LandingHero: React.FC = () => {
             </div>
             <h3 className="font-serif text-lg font-semibold text-stone-900">Resilient Gemini Engine</h3>
             <p className="mt-2 text-sm text-stone-600 leading-relaxed">
-              Powered by Gemini 3.6 Flash with automated multi-tier fallback ladders for high availability and zero downtime.
+              Powered by Gemini 3.8 Flash with automated multi-tier fallback ladders for high availability and zero downtime.
             </p>
           </div>
         </div>

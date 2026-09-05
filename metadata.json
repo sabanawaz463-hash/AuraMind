@@ -1,6 +1,6 @@
 {
   "name": "AuraMind - AI Reflection & Journal",
-  "description": "A mindful, user-authenticated journaling and multi-turn AI reflection platform powered by Gemini 3.6 Flash and user-isolated Cloud Firestore.",
+  "description": "A mindful, user-authenticated journaling and multi-turn AI reflection platform powered by Gemini 3.8 Flash and user-isolated Cloud Firestore.",
   "requestFramePermissions": [
     "microphone"
   ],
