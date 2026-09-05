@@ -4,13 +4,10 @@ import {
   Pin,
   Trash2,
   Calendar,
-  Sparkles,
-  Filter,
   X,
-  MessageSquare,
   FileDown,
 } from 'lucide-react';
-import { JournalEntry, ReflectionMode, MoodType } from '../types';
+import { JournalEntry, ReflectionMode } from '../types';
 
 interface HistorySidebarProps {
   entries: JournalEntry[];
@@ -37,7 +34,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   const [selectedFilterMode, setSelectedFilterMode] = useState<string>('all');
   const [selectedFilterMood, setSelectedFilterMood] = useState<string>('all');
 
-  // Filter entries
   const filteredEntries = entries.filter((entry) => {
     const matchesSearch =
       (entry.title && entry.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -50,7 +46,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     return matchesSearch && matchesMode && matchesMood;
   });
 
-  // Sort: pinned first, then newest updated first
   const sortedEntries = [...filteredEntries].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1;
     if (!a.isPinned && b.isPinned) return 1;
@@ -74,7 +69,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
   return (
     <>
-      {/* Mobile Backdrop */}
       {isOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/30 backdrop-blur-xs md:hidden"
@@ -88,7 +82,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        {/* Sidebar Header & Search */}
         <div className="border-b border-stone-100 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -110,7 +103,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             </button>
           </div>
 
-          {/* Search Input */}
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-stone-400" />
             <input
@@ -131,7 +123,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             )}
           </div>
 
-          {/* Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px]">
             <select
               id="mode-filter-select"
@@ -165,7 +156,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           </div>
         </div>
 
-        {/* Entries List */}
         <div className="flex-1 overflow-y-auto p-2 space-y-1.5">
           {sortedEntries.length === 0 ? (
             <div className="p-6 text-center text-xs text-stone-400">
@@ -223,7 +213,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     </div>
                   </div>
 
-                  {/* Summary Snippet or Last Message */}
                   <p className="line-clamp-2 text-[11px] text-stone-500 font-normal leading-relaxed">
                     {entry.summary ||
                       (entry.messages.length > 0
@@ -231,7 +220,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         : 'Empty session')}
                   </p>
 
-                  {/* Metadata Row */}
                   <div className="mt-1 flex items-center justify-between text-[10px] text-stone-400">
                     <div className="flex items-center gap-1.5">
                       {getModeBadge(entry.mode)}

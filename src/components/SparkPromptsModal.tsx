@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Sparkles, RefreshCw, ArrowRight, Lightbulb } from 'lucide-react';
+import { X, RefreshCw, ArrowRight, Lightbulb } from 'lucide-react';
 import { SparkPrompt, MoodType } from '../types';
 import { fetchSparkPrompts } from '../lib/api';
 

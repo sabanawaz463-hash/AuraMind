@@ -7,11 +7,9 @@ import {
   User,
   Copy,
   Check,
-  RotateCcw,
   Tag,
   CheckCircle,
   FileDown,
-  CloudCheck,
   CloudUpload,
   AlertCircle,
   CheckSquare,
@@ -29,7 +27,6 @@ import {
   ChatMessage,
   ReflectionMode,
   MoodType,
-  ReflectionAnalysis,
 } from '../types';
 import { sendReflectionPrompt, summarizeConversation } from '../lib/api';
 import { SpeechInputButton } from './SpeechInputButton';
@@ -110,12 +107,10 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-scroll on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [entry.messages, isGenerating]);
 
-  // Adjust textarea height dynamically
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInputText(e.target.value);
     if (textareaRef.current) {
@@ -137,11 +132,9 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
 
     const newMessages = [...entry.messages, userMessage];
 
-    // Optimistically update entry messages
     await onUpdateEntry({
       messages: newMessages,
       updatedAt: Date.now(),
-      // Auto-generate title from first prompt if untitled
       title:
         entry.title === 'Untitled Reflection' || !entry.title
           ? textToSend.slice(0, 40) + (textToSend.length > 40 ? '...' : '')
@@ -176,7 +169,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
       const finalMessages = [...newMessages, assistantMessage];
       setLastModelUsed(response.modelUsed);
 
-      // Persist full conversation with response model
       await onUpdateEntry({
         messages: finalMessages,
         modelUsed: response.modelUsed,
@@ -216,7 +208,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
           updatedAt: Date.now(),
         });
 
-        // Trigger celebratory confetti
         confetti({
           particleCount: 50,
           spread: 60,
@@ -275,10 +266,8 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
 
   return (
     <div className="flex-1 flex flex-col h-[calc(100vh-4rem)] bg-stone-50/50 overflow-hidden">
-      {/* Top Session Control Bar */}
       <div className="border-b border-stone-200/80 bg-white px-4 sm:px-6 py-3 shrink-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Title and Cloud Save State */}
           <div className="flex-1 min-w-0 flex items-center gap-3">
             <input
               id="reflection-title-input"
@@ -288,7 +277,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
               placeholder="Untitled Reflection..."
               className="font-serif text-lg sm:text-xl font-bold text-stone-900 bg-transparent border-b border-transparent hover:border-stone-300 focus:border-amber-600 focus:outline-none w-full truncate py-0.5"
             />
-            {/* Status indicator */}
             <div className="shrink-0 flex items-center text-xs">
               {saveStatus === 'saved' && (
                 <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60 font-medium">
@@ -314,7 +302,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
             </div>
           </div>
 
-          {/* Quick Actions */}
           <div className="flex items-center gap-2 shrink-0">
             {entry.messages.length > 0 && (
               <button
@@ -340,9 +327,7 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
           </div>
         </div>
 
-        {/* Mode Selector & Mood Bar */}
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-stone-100">
-          {/* Modes */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full">
             <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400 mr-1 shrink-0">
               Mode:
@@ -369,7 +354,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
             })}
           </div>
 
-          {/* Mood Selector */}
           <div className="flex items-center gap-2 text-xs">
             <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400 shrink-0">
               Mood:
@@ -391,7 +375,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
           </div>
         </div>
 
-        {/* Tags Row */}
         <div className="mt-2 flex flex-wrap items-center gap-1.5 pt-1">
           <Tag className="h-3 w-3 text-stone-400" />
           {entry.tags?.map((tag) => (
@@ -445,9 +428,7 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
         </div>
       </div>
 
-      {/* Main Conversation & Reflection Feed */}
       <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-        {/* Synthesis Banner if available */}
         {entry.summary && (
           <div className="rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50/90 to-orange-50/50 p-5 shadow-xs">
             <div className="flex items-center justify-between gap-2 mb-2">
@@ -465,7 +446,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
               {entry.summary}
             </p>
 
-            {/* Key Takeaways */}
             {entry.keyTakeaways && entry.keyTakeaways.length > 0 && (
               <div className="mt-3 pt-3 border-t border-amber-200/60">
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-amber-900 mb-1.5">
@@ -479,7 +459,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
               </div>
             )}
 
-            {/* Action Items */}
             {entry.actionItems && entry.actionItems.length > 0 && (
               <div className="mt-3 pt-3 border-t border-amber-200/60">
                 <h4 className="text-[11px] font-bold uppercase tracking-wider text-amber-900 mb-1.5">
@@ -516,7 +495,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
           </div>
         )}
 
-        {/* Empty State Prompt Suggestions */}
         {entry.messages.length === 0 && (
           <div className="flex flex-col items-center justify-center py-12 text-center max-w-lg mx-auto">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 border border-amber-200/60 mb-4 shadow-xs">
@@ -541,7 +519,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
           </div>
         )}
 
-        {/* Messages Transcript */}
         {entry.messages.map((msg) => {
           const isUser = msg.role === 'user';
           const isCopied = copiedId === msg.id;
@@ -553,7 +530,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
                 isUser ? 'ml-auto flex-row-reverse' : 'mr-auto'
               }`}
             >
-              {/* Avatar */}
               <div
                 className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                   isUser
@@ -564,7 +540,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
                 {isUser ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
               </div>
 
-              {/* Message Bubble */}
               <div className="group relative flex-1 min-w-0">
                 <div
                   className={`rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
@@ -582,7 +557,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
                   )}
                 </div>
 
-                {/* Footer Meta & Copy */}
                 <div
                   className={`mt-1 flex items-center gap-2 text-[10px] text-stone-400 ${
                     isUser ? 'justify-end' : 'justify-start'
@@ -609,7 +583,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
           );
         })}
 
-        {/* Loading Bubble */}
         {isGenerating && (
           <div className="flex items-start gap-3 max-w-3xl mr-auto animate-in fade-in">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-600 text-white shadow-xs">
@@ -629,7 +602,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input Box Footer */}
       <div className="border-t border-stone-200/80 bg-white p-3 sm:p-4 shrink-0">
         <form
           onSubmit={(e) => {
@@ -655,7 +627,6 @@ export const ReflectionWorkspace: React.FC<ReflectionWorkspaceProps> = ({
               className="w-full resize-none bg-transparent px-4 pt-3 pb-12 text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none"
             />
 
-            {/* Bottom Controls Bar inside textarea */}
             <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
               <div className="flex items-center gap-1.5">
                 <SpeechInputButton

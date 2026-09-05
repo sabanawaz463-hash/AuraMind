@@ -29,7 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isSidebarOpen,
   entryCount,
 }) => {
-  const { user, profile, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   return (

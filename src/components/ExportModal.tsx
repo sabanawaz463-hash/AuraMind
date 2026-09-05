@@ -154,7 +154,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
 
         {/* Options */}
         <div className="mt-4 space-y-4">
-          {/* Scope Selector */}
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-stone-500 block mb-1.5">
               Export Scope
@@ -184,7 +183,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </div>
           </div>
 
-          {/* Format Selector */}
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-stone-500 block mb-1.5">
               File Format
@@ -214,7 +212,6 @@ export const ExportModal: React.FC<ExportModalProps> = ({
             </div>
           </div>
 
-          {/* Preview Box */}
           <div>
             <label className="text-xs font-bold uppercase tracking-wider text-stone-500 block mb-1.5">
               Live Preview

@@ -1,7 +1,3 @@
-/**
- * Strips all undefined properties recursively from objects before persisting to Firestore
- * to prevent database driver rejections.
- */
 export function sanitizeForFirestore<T>(data: T): T {
   if (data === null || data === undefined) {
     return null as any;

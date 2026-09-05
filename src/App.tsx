@@ -9,9 +9,9 @@ import {
   orderBy,
 } from 'firebase/firestore';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { db } from './lib/firebase';
+import { db, handleFirestoreError, OperationType } from './lib/firebase';
 import { sanitizeForFirestore } from './lib/sanitizer';
-import { JournalEntry, ReflectionMode, MoodType } from './types';
+import { JournalEntry } from './types';
 import { Navbar } from './components/Navbar';
 import { LandingHero } from './components/LandingHero';
 import { HistorySidebar } from './components/HistorySidebar';
@@ -42,6 +42,28 @@ const createDefaultEntry = (userId: string, customPrompt?: string, suggestedTitl
   isPinned: false,
 });
 
+const getStorageKey = (uid: string) => `auramind_entries_${uid}`;
+
+const loadLocalEntries = (uid: string): JournalEntry[] => {
+  try {
+    const raw = localStorage.getItem(getStorageKey(uid));
+    if (raw) {
+      return JSON.parse(raw);
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+};
+
+const saveLocalEntries = (uid: string, entries: JournalEntry[]) => {
+  try {
+    localStorage.setItem(getStorageKey(uid), JSON.stringify(entries));
+  } catch {
+    // ignore
+  }
+};
+
 const MainDashboard: React.FC = () => {
   const { user } = useAuth();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -49,12 +71,10 @@ const MainDashboard: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved');
 
-  // Modals state
   const [isSparkModalOpen, setIsSparkModalOpen] = useState(false);
   const [isAnalyticsModalOpen, setIsAnalyticsModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
-  // Subscribe to user-isolated Firestore collection
   useEffect(() => {
     if (!user) {
       setEntries([]);
@@ -62,41 +82,71 @@ const MainDashboard: React.FC = () => {
       return;
     }
 
+    // If guest, use local storage engine
+    if (user.isGuest) {
+      const local = loadLocalEntries(user.uid);
+      if (local.length > 0) {
+        setEntries(local);
+        setActiveEntry(local[0]);
+      } else {
+        const initial = createDefaultEntry(user.uid);
+        setEntries([initial]);
+        setActiveEntry(initial);
+        saveLocalEntries(user.uid, [initial]);
+      }
+      return;
+    }
+
+    // If authenticated user, attach real-time Firestore listener with fallback
+    const interactionsPath = `users/${user.uid}/interactions`;
     const interactionsRef = collection(db, 'users', user.uid, 'interactions');
     const q = query(interactionsRef, orderBy('createdAt', 'desc'));
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const fetched: JournalEntry[] = [];
-        snapshot.forEach((docSnap) => {
-          fetched.push(docSnap.data() as JournalEntry);
-        });
+    let unsubscribe = () => {};
+    try {
+      unsubscribe = onSnapshot(
+        q,
+        (snapshot) => {
+          const fetched: JournalEntry[] = [];
+          snapshot.forEach((docSnap) => {
+            fetched.push(docSnap.data() as JournalEntry);
+          });
 
-        setEntries(fetched);
+          setEntries(fetched);
+          saveLocalEntries(user.uid, fetched);
 
-        // If no active entry is selected, select the first or create one
-        setActiveEntry((prev) => {
-          if (prev) {
-            const found = fetched.find((e) => e.id === prev.id);
-            return found || prev;
+          setActiveEntry((prev) => {
+            if (prev) {
+              const found = fetched.find((e) => e.id === prev.id);
+              return found || prev;
+            }
+            if (fetched.length > 0) {
+              return fetched[0];
+            }
+            const defaultEntry = createDefaultEntry(user.uid);
+            return defaultEntry;
+          });
+        },
+        (error) => {
+          handleFirestoreError(error, OperationType.LIST, interactionsPath);
+          const cached = loadLocalEntries(user.uid);
+          if (cached.length > 0) {
+            setEntries(cached);
+            setActiveEntry((prev) => prev || cached[0]);
+          } else {
+            const def = createDefaultEntry(user.uid);
+            setEntries([def]);
+            setActiveEntry(def);
           }
-          if (fetched.length > 0) {
-            return fetched[0];
-          }
-          const defaultEntry = createDefaultEntry(user.uid);
-          return defaultEntry;
-        });
-      },
-      (error) => {
-        console.error('Firestore real-time subscription error:', error);
-      }
-    );
+        }
+      );
+    } catch (err) {
+      handleFirestoreError(err, OperationType.LIST, interactionsPath);
+    }
 
     return () => unsubscribe();
   }, [user]);
 
-  // Persist entry changes to Firestore
   const handleUpdateEntry = useCallback(
     async (updatedFields: Partial<JournalEntry>) => {
       if (!user || !activeEntry) return;
@@ -108,14 +158,25 @@ const MainDashboard: React.FC = () => {
       };
 
       setActiveEntry(updatedEntry);
+      setEntries((prev) => {
+        const next = prev.map((e) => (e.id === updatedEntry.id ? updatedEntry : e));
+        saveLocalEntries(user.uid, next);
+        return next;
+      });
       setSaveStatus('saving');
 
+      if (user.isGuest) {
+        setSaveStatus('saved');
+        return;
+      }
+
+      const docPath = `users/${user.uid}/interactions/${updatedEntry.id}`;
       try {
         const docRef = doc(db, 'users', user.uid, 'interactions', updatedEntry.id);
         await setDoc(docRef, sanitizeForFirestore(updatedEntry), { merge: true });
         setSaveStatus('saved');
       } catch (err) {
-        console.error('Failed to save reflection to Firestore:', err);
+        handleFirestoreError(err, OperationType.WRITE, docPath);
         setSaveStatus('error');
       }
     },
@@ -127,12 +188,19 @@ const MainDashboard: React.FC = () => {
       if (!user) return;
       const newEntry = createDefaultEntry(user.uid, customPrompt, suggestedTitle);
       setActiveEntry(newEntry);
+      setEntries((prev) => {
+        const next = [newEntry, ...prev.filter((e) => e.id !== newEntry.id)];
+        saveLocalEntries(user.uid, next);
+        return next;
+      });
       setIsSidebarOpen(false);
 
-      // Save initial draft to Firestore
+      if (user.isGuest) return;
+
+      const docPath = `users/${user.uid}/interactions/${newEntry.id}`;
       const docRef = doc(db, 'users', user.uid, 'interactions', newEntry.id);
       setDoc(docRef, sanitizeForFirestore(newEntry)).catch((err) => {
-        console.error('Failed to create initial draft in Firestore:', err);
+        handleFirestoreError(err, OperationType.CREATE, docPath);
       });
     },
     [user]
@@ -144,20 +212,26 @@ const MainDashboard: React.FC = () => {
       if (!user) return;
       if (!window.confirm('Are you sure you want to delete this reflection?')) return;
 
+      const remaining = entries.filter((item) => item.id !== id);
+      setEntries(remaining);
+      saveLocalEntries(user.uid, remaining);
+
+      if (activeEntry?.id === id) {
+        if (remaining.length > 0) {
+          setActiveEntry(remaining[0]);
+        } else {
+          handleNewReflection();
+        }
+      }
+
+      if (user.isGuest) return;
+
+      const docPath = `users/${user.uid}/interactions/${id}`;
       try {
         const docRef = doc(db, 'users', user.uid, 'interactions', id);
         await deleteDoc(docRef);
-
-        if (activeEntry?.id === id) {
-          const remaining = entries.filter((item) => item.id !== id);
-          if (remaining.length > 0) {
-            setActiveEntry(remaining[0]);
-          } else {
-            handleNewReflection();
-          }
-        }
       } catch (err) {
-        console.error('Failed to delete reflection from Firestore:', err);
+        handleFirestoreError(err, OperationType.DELETE, docPath);
       }
     },
     [user, entries, activeEntry, handleNewReflection]
@@ -170,12 +244,21 @@ const MainDashboard: React.FC = () => {
       const target = entries.find((item) => item.id === id);
       if (!target) return;
 
+      const updated = { ...target, isPinned: !target.isPinned, updatedAt: Date.now() };
+      setEntries((prev) => {
+        const next = prev.map((item) => (item.id === id ? updated : item));
+        saveLocalEntries(user.uid, next);
+        return next;
+      });
+
+      if (user.isGuest) return;
+
+      const docPath = `users/${user.uid}/interactions/${id}`;
       try {
-        const updated = { ...target, isPinned: !target.isPinned, updatedAt: Date.now() };
         const docRef = doc(db, 'users', user.uid, 'interactions', id);
         await setDoc(docRef, sanitizeForFirestore(updated), { merge: true });
       } catch (err) {
-        console.error('Failed to toggle pin state:', err);
+        handleFirestoreError(err, OperationType.UPDATE, docPath);
       }
     },
     [user, entries]
@@ -185,7 +268,6 @@ const MainDashboard: React.FC = () => {
     return <LandingHero />;
   }
 
-  // Ensure an active entry always exists
   const currentWorkspaceEntry = activeEntry || createDefaultEntry(user.uid);
 
   return (
@@ -200,7 +282,6 @@ const MainDashboard: React.FC = () => {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar for History */}
         <HistorySidebar
           entries={entries}
           activeEntryId={currentWorkspaceEntry.id}
@@ -212,7 +293,6 @@ const MainDashboard: React.FC = () => {
           onClose={() => setIsSidebarOpen(false)}
         />
 
-        {/* Primary Interactive Reflection Workspace */}
         <ReflectionWorkspace
           entry={currentWorkspaceEntry}
           onUpdateEntry={handleUpdateEntry}
@@ -223,7 +303,6 @@ const MainDashboard: React.FC = () => {
         />
       </div>
 
-      {/* Modals */}
       <SparkPromptsModal
         isOpen={isSparkModalOpen}
         onClose={() => setIsSparkModalOpen(false)}
@@ -254,3 +333,4 @@ export default function App() {
     </AuthProvider>
   );
 }
+

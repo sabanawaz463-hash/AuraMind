@@ -15,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export const LandingHero: React.FC = () => {
-  const { signInWithGoogle, authError, clearAuthError, loading } = useAuth();
+  const { signInWithGoogle, continueAsGuest, authError, clearAuthError, loading } = useAuth();
 
   return (
     <div className="relative min-h-screen bg-stone-50 text-stone-900 flex flex-col justify-between selection:bg-amber-100 selection:text-amber-900">
@@ -29,15 +29,24 @@ export const LandingHero: React.FC = () => {
             AuraMind
           </span>
         </div>
-        <button
-          id="top-signin-btn"
-          onClick={signInWithGoogle}
-          disabled={loading}
-          className="inline-flex items-center gap-2 rounded-lg bg-stone-900 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-stone-800 transition active:scale-95 disabled:opacity-50"
-        >
-          <span>Sign In with Google</span>
-          <ArrowRight className="h-3.5 w-3.5" />
-        </button>
+        <div className="flex items-center gap-2.5">
+          <button
+            id="top-guest-btn"
+            onClick={continueAsGuest}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-stone-200 bg-white px-3.5 py-2 text-xs font-semibold text-stone-700 shadow-xs hover:bg-stone-50 transition active:scale-95"
+          >
+            <span>Guest Mode</span>
+          </button>
+          <button
+            id="top-signin-btn"
+            onClick={signInWithGoogle}
+            disabled={loading}
+            className="inline-flex items-center gap-2 rounded-lg bg-stone-900 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-stone-800 transition active:scale-95 disabled:opacity-50"
+          >
+            <span>Sign In with Google</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Main Hero Container */}
@@ -104,6 +113,15 @@ export const LandingHero: React.FC = () => {
               />
             </svg>
             <span>Continue with Google Sign-In</span>
+          </button>
+
+          <button
+            id="hero-guest-btn"
+            onClick={continueAsGuest}
+            className="flex h-12 w-full sm:w-auto items-center justify-center gap-2.5 rounded-xl border border-stone-300 bg-white px-6 py-3 text-sm font-semibold text-stone-700 shadow-sm hover:bg-stone-100 hover:text-stone-900 active:scale-95 transition"
+          >
+            <span>Explore in Guest Mode</span>
+            <ArrowRight className="h-4 w-4" />
           </button>
         </div>
 

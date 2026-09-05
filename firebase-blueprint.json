@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile information and metadata",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "lastLoginAt": { "type": "number" }
+      },
+      "required": ["uid", "createdAt"]
+    },
+    "JournalEntry": {
+      "title": "JournalEntry",
+      "description": "AuraMind journal reflection entry, prompts, and AI conversation history",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "mode": { "type": "string" },
+        "mood": { "type": "string" },
+        "tags": { "type": "array" },
+        "messages": { "type": "array" },
+        "summary": { "type": "string" },
+        "keyTakeaways": { "type": "array" },
+        "actionItems": { "type": "array" },
+        "isPinned": { "type": "boolean" },
+        "wordCount": { "type": "number" },
+        "modelUsed": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["id", "userId", "title", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/profiles/{profileId}": {
+      "schema": "UserProfile",
+      "description": "User personal profile details"
+    },
+    "/users/{userId}/interactions/{interactionId}": {
+      "schema": "JournalEntry",
+      "description": "User journal entries and AI reflections"
+    }
+  }
+}

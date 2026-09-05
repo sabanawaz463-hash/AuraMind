@@ -15,20 +15,17 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  // Calculate statistics
   const totalEntries = entries.length;
   const totalWords = entries.reduce((acc, curr) => {
     const text = curr.messages.map((m) => m.content).join(' ');
     return acc + (text ? text.trim().split(/\s+/).length : 0);
   }, 0);
 
-  // Calculate day streak
   const uniqueDays = new Set(
     entries.map((e) => new Date(e.createdAt).toISOString().split('T')[0])
   );
   const activeStreak = uniqueDays.size;
 
-  // Mode breakdown
   const modeCounts: Record<string, number> = {
     reflection: 0,
     brainstorm: 0,
@@ -41,7 +38,6 @@ export const AnalyticsModal: React.FC<AnalyticsModalProps> = ({
     }
   });
 
-  // Mood frequency
   const moodCounts: Record<string, number> = {};
   entries.forEach((e) => {
     if (e.mood) {

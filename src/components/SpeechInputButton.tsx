@@ -6,7 +6,6 @@ interface SpeechInputButtonProps {
   disabled?: boolean;
 }
 
-// Support SpeechRecognition interfaces across browsers
 declare global {
   interface Window {
     SpeechRecognition?: any;

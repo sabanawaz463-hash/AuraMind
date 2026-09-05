@@ -1,23 +1,17 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 
 dotenv.config();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
-// Top-Level Request Deserialization (Ordering Guarantee)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Lazy initialization of Gemini client
 let genAIClient: GoogleGenAI | null = null;
 function getGenAI(): GoogleGenAI {
   const apiKey = process.env.GEMINI_API_KEY;
@@ -30,7 +24,6 @@ function getGenAI(): GoogleGenAI {
   return genAIClient;
 }
 
-// Resilient Model Fallback Ladder
 const MODEL_FALLBACK_LADDER = [
   'gemini-3.6-flash',
   'gemini-3.1-flash-lite',
@@ -77,7 +70,7 @@ async function generateContentWithFallback(options: FallbackOptions) {
         err?.message?.includes('UNAVAILABLE') ||
         err?.message?.includes('not found');
 
-      console.warn(`[Gemini Fallback] Model ${modelName} failed with error: ${err.message}. Recoverable: ${isRecoverable}`);
+      console.warn(`[Gemini Fallback] Model ${modelName} failed: ${err.message}. Recoverable: ${isRecoverable}`);
       if (!isRecoverable && MODEL_FALLBACK_LADDER.indexOf(modelName) === MODEL_FALLBACK_LADDER.length - 1) {
         break;
       }
@@ -87,7 +80,6 @@ async function generateContentWithFallback(options: FallbackOptions) {
   throw lastError || new Error('All models in the resilient fallback ladder failed.');
 }
 
-// API Routes
 app.get('/api/health', (req: Request, res: Response) => {
   res.json({
     status: 'ok',
@@ -96,11 +88,10 @@ app.get('/api/health', (req: Request, res: Response) => {
   });
 });
 
-// Main Multi-turn Reflection Endpoint
 app.post('/api/reflect', async (req: Request, res: Response) => {
   try {
     const data = req.body && typeof req.body === 'object' ? req.body : {};
-    const { messages, mode, mood, tags, title } = data;
+    const { messages, mode, mood, tags } = data;
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: 'Valid messages array is required.' });
@@ -126,7 +117,6 @@ Instructions:
 4. Keep paragraph breaks generous for easy reading.
 5. If the user shares deep vulnerability or challenges, offer balanced perspective and gentle inquiry.`;
 
-    // Convert messages to Gemini format
     const formattedContents = messages.map((m: any) => ({
       role: m.role === 'assistant' || m.role === 'model' ? 'model' : 'user',
       parts: [{ text: String(m.content || m.text || '') }],
@@ -150,7 +140,6 @@ Instructions:
   }
 });
 
-// Endpoint: Generate Title & Executive Summary & Mood Insights
 app.post('/api/summarize', async (req: Request, res: Response) => {
   try {
     const data = req.body && typeof req.body === 'object' ? req.body : {};
@@ -216,7 +205,6 @@ Do not include backticks around json or wrap in markdown block if possible, outp
   }
 });
 
-// Endpoint: Generate Tailored Prompts / Spark Ideas
 app.post('/api/spark-prompts', async (req: Request, res: Response) => {
   try {
     const data = req.body && typeof req.body === 'object' ? req.body : {};
@@ -255,7 +243,6 @@ Return strictly valid JSON array of objects:
   }
 });
 
-// Start Server with Vite Middleware or Production Static Serve
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
