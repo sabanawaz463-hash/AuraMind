@@ -1,3 +1,6 @@
+
+<img width="1376" height="768" alt="thumbnail" src="https://github.com/user-attachments/assets/d66b9fd4-e822-4575-9576-cfaeab15af9a" />
+
 # AuraMind — AI-Authenticated Reflection & Journaling Platform
 
 AuraMind is a mindful, secure, multi-turn AI reflection and personal journaling web application. It combines **Google Gemini 3.6 Flash** for introspective reasoning with **Firebase Authentication (Google Federated Sign-In)** and **Google Cloud Firestore** for strictly user-isolated persistence.
